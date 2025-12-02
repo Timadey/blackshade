@@ -4,25 +4,48 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
 
+import useInfiniteScroll from '../hooks/useInfiniteScroll';
+
 const Dashboard = () => {
     const { user } = useAuth();
     const [boards, setBoards] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const BOARDS_PER_PAGE = 20;
 
     useEffect(() => {
-        if (user) fetchBoards();
+        if (user) fetchBoards(0, true);
     }, [user]);
 
-    const fetchBoards = async () => {
+    const fetchBoards = async (pageNumber = 0, reset = false) => {
+        if (!reset && !hasMore) return;
+
+        setLoading(true);
         try {
+            const from = pageNumber * BOARDS_PER_PAGE;
+            const to = from + BOARDS_PER_PAGE - 1;
+
             const { data, error } = await supabase
                 .from('boards')
                 .select('*')
                 .eq('creator_id', user.id)
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .range(from, to);
 
             if (error) throw error;
-            setBoards(data || []);
+
+            if (data.length < BOARDS_PER_PAGE) {
+                setHasMore(false);
+            }
+
+            if (reset) {
+                setBoards(data || []);
+            } else {
+                setBoards(prev => [...prev, ...(data || [])]);
+            }
+
+            setPage(pageNumber + 1);
         } catch (error) {
             console.error('Error fetching boards:', error);
         } finally {
@@ -30,12 +53,16 @@ const Dashboard = () => {
         }
     };
 
+    const lastBoardRef = useInfiniteScroll(() => {
+        fetchBoards(page);
+    }, hasMore, loading);
+
     return (
         <Layout>
             <div className="max-w-4xl mx-auto">
                 <div className="flex items-center justify-between mb-8">
                     <h2 className="text-3xl font-bold">Your Dashboard</h2>
-                    <Link to="/board/create" className="glass-button bg-white/10 hover:bg-white/20">
+                    <Link to="/create-board" className="glass-button bg-white/10 hover:bg-white/20">
                         + Create Board
                     </Link>
                 </div>
@@ -55,24 +82,29 @@ const Dashboard = () => {
 
                 <h3 className="text-xl font-bold mt-12 mb-6">Your Boards</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {loading ? (
-                        [...Array(3)].map((_, i) => <div key={i} className="glass-card animate-pulse h-32" />)
-                    ) : (
-                        boards.map((board) => (
-                            <Link key={board.id} to={`/b/${board.slug}`} className="glass-card group cursor-pointer block">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className={`px-2 py-1 rounded text-xs font-medium ${board.settings?.privacy === 'public' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                                        {board.settings?.privacy || 'public'}
+                    {boards.map((board, index) => {
+                        const isLast = index === boards.length - 1;
+                        return (
+                            <div key={board.id} ref={isLast ? lastBoardRef : null}>
+                                <Link to={`/b/${board.slug}`} className="glass-card group cursor-pointer block h-full">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className={`px-2 py-1 rounded text-xs font-medium ${board.settings?.privacy === 'public' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                                            {board.settings?.privacy || 'public'}
+                                        </div>
+                                        <span className="text-xs text-secondary">{new Date(board.created_at).toLocaleDateString()}</span>
                                     </div>
-                                    <span className="text-xs text-secondary">{new Date(board.created_at).toLocaleDateString()}</span>
-                                </div>
-                                <h4 className="text-lg font-bold mb-2 group-hover:text-blue-400 transition-colors">{board.title}</h4>
-                            </Link>
-                        ))
+                                    <h4 className="text-lg font-bold mb-2 group-hover:text-blue-400 transition-colors">{board.title}</h4>
+                                </Link>
+                            </div>
+                        );
+                    })}
+
+                    {loading && (
+                        [...Array(3)].map((_, i) => <div key={i} className="glass-card animate-pulse h-32" />)
                     )}
 
                     {/* Create New Placeholder */}
-                    <Link to="/board/create" className="glass-card border-dashed border-white/20 flex flex-col items-center justify-center text-secondary hover:text-primary hover:border-white/40 cursor-pointer min-h-[150px]">
+                    <Link to="/create-board" className="glass-card border-dashed border-white/20 flex flex-col items-center justify-center text-secondary hover:text-primary hover:border-white/40 cursor-pointer min-h-[150px]">
                         <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                         </svg>
