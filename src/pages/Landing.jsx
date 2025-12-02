@@ -50,10 +50,19 @@ const Landing = () => {
                         <button
                             onClick={handleAnonymousLogin}
                             disabled={loading}
-                            className="glass-button w-full sm:w-auto min-w-[280px] bg-white text-black hover:bg-white/90 disabled:opacity-50 text-lg py-3"
+                            className="glass-button text-lg px-8 py-4 bg-white text-black hover:bg-white/90 w-full sm:w-auto"
                         >
-                            {loading ? 'Entering...' : '🎭 Enter Anonymously'}
+                            {loading ? 'Entering Shadows...' : 'Enter Anonymously'}
                         </button>
+
+                        <div className="max-w-md mx-auto mt-6 text-sm text-secondary space-y-2 bg-white/5 p-4 rounded-lg border border-white/10">
+                            <p>
+                                <span className="text-primary font-semibold">Note:</span> A unique pseudonym will be created for you.
+                            </p>
+                            <p>
+                                You will remain signed in on this device until you choose to sign out.
+                            </p>
+                        </div>
                     </div>
 
                     <p className="text-xs text-secondary/50 pt-8">

@@ -4,36 +4,51 @@ import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
 import CreatePostModal from '../components/CreatePostModal';
 import MessageReactions from '../components/MessageReactions';
+import ReplyButton from '../components/ReplyButton';
+
+import useInfiniteScroll from '../hooks/useInfiniteScroll';
 
 const Feed = () => {
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [radius, setRadius] = useState(5000); // Default 5km
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const MESSAGES_PER_PAGE = 20;
 
     useEffect(() => {
-        fetchMessages();
+        fetchMessages(0, true);
     }, []);
 
-    const fetchMessages = async () => {
+    const fetchMessages = async (pageNumber = 0, reset = false) => {
+        if (!reset && !hasMore) return;
+
         setLoading(true);
         try {
-            // For now, just fetch all messages ordered by time
-            // In a real scenario with PostGIS, we would use an RPC call to filter by distance
-            // But since we are using raw SQL in the plan, we might need a custom RPC function for "nearby"
-            // For this MVP step, let's just fetch recent messages globally or filter client side if small scale.
-            // Or better, let's try to fetch all for now to ensure data flow works.
+            const from = pageNumber * MESSAGES_PER_PAGE;
+            const to = from + MESSAGES_PER_PAGE - 1;
 
-            // Fetch only messages WITHOUT a board_id (global feed messages only)
             const { data, error } = await supabase
                 .from('messages')
                 .select('*, profiles(pseudonym)')
-                .is('board_id', null)  // Only get messages not associated with any board
+                .is('board_id', null)
+                .is('parent_id', null)
                 .order('created_at', { ascending: false })
-                .limit(50);
+                .range(from, to);
 
             if (error) throw error;
-            setMessages(data || []);
+
+            if (data.length < MESSAGES_PER_PAGE) {
+                setHasMore(false);
+            }
+
+            if (reset) {
+                setMessages(data || []);
+            } else {
+                setMessages(prev => [...prev, ...(data || [])]);
+            }
+
+            setPage(pageNumber + 1);
         } catch (error) {
             console.error('Error fetching messages:', error);
         } finally {
@@ -41,12 +56,21 @@ const Feed = () => {
         }
     };
 
+    const handleRefresh = () => {
+        setPage(0);
+        setHasMore(true);
+        fetchMessages(0, true);
+    };
+
+    const lastMessageRef = useInfiniteScroll(() => {
+        fetchMessages(page);
+    }, hasMore, loading);
+
     return (
         <Layout>
             <div className="max-w-2xl mx-auto space-y-6">
                 <div className="flex items-center justify-between mb-8">
                     <h2 className="text-2xl font-bold">Global Feed</h2>
-                    {/* Location filter placeholder */}
                 </div>
 
                 {/* Create Post Input Trigger */}
@@ -67,25 +91,39 @@ const Feed = () => {
 
                 {/* Feed Stream */}
                 <div className="space-y-4">
-                    {loading ? (
-                        [...Array(3)].map((_, i) => (
-                            <div key={i} className="glass-card animate-pulse h-32" />
-                        ))
-                    ) : (
-                        messages.map((msg) => (
-                            <div key={msg.id} className="glass-card animate-slide-up">
+                    {messages.map((msg, index) => {
+                        const isLast = index === messages.length - 1;
+                        return (
+                            <div
+                                key={msg.id}
+                                ref={isLast ? lastMessageRef : null}
+                                className="glass-card animate-slide-up"
+                            >
                                 <p className="text-lg mb-4 leading-relaxed">{msg.content}</p>
-                                <div className="flex items-center justify-between text-xs text-secondary font-medium">
+                                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-secondary font-medium mb-3">
                                     <div className="flex items-center space-x-4">
                                         <span className="font-bold text-white/80">
                                             {msg.profiles?.pseudonym || 'Anonymous'}
                                         </span>
                                         <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
+                                    <ReplyButton messageId={msg.id} replyCount={msg.reply_count} />
                                 </div>
                                 <MessageReactions messageId={msg.id} />
                             </div>
-                        ))
+                        );
+                    })}
+
+                    {loading && (
+                        <div className="glass-card animate-pulse h-32 flex items-center justify-center text-secondary">
+                            Loading more...
+                        </div>
+                    )}
+
+                    {!hasMore && messages.length > 0 && (
+                        <div className="text-center text-secondary py-8">
+                            You've reached the end of the feed.
+                        </div>
                     )}
                 </div>
             </div>
@@ -93,7 +131,7 @@ const Feed = () => {
             <CreatePostModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onSuccess={fetchMessages}
+                onSuccess={handleRefresh}
             />
         </Layout>
     );

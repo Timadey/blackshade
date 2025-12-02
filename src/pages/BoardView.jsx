@@ -6,6 +6,9 @@ import Layout from '../components/Layout';
 import CreatePostModal from '../components/CreatePostModal';
 import BoardShareModal from '../components/BoardShareModal';
 import MessageReactions from '../components/MessageReactions';
+import ReplyButton from '../components/ReplyButton';
+
+import useInfiniteScroll from '../hooks/useInfiniteScroll';
 
 const BoardView = () => {
     const { slug } = useParams();
@@ -14,46 +17,83 @@ const BoardView = () => {
     const [board, setBoard] = useState(null);
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [stats, setStats] = useState({ message_count: 0, reaction_count: 0 });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
     const [error, setError] = useState(null);
     const [isOwner, setIsOwner] = useState(false);
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const MESSAGES_PER_PAGE = 20;
 
     useEffect(() => {
-        fetchBoardData();
+        fetchBoardData(0, true);
     }, [slug, user]);
 
-    const fetchBoardData = async () => {
+    const fetchBoardData = async (pageNumber = 0, reset = false) => {
+        if (!reset && !hasMore) return;
+
         setLoading(true);
         setError(null);
         try {
-            // Fetch Board Details by slug
-            const { data: boardData, error: boardError } = await supabase
-                .from('boards')
-                .select('*')
-                .eq('slug', slug)
-                .single();
+            let currentBoard = board;
 
-            if (boardError) throw boardError;
-            setBoard(boardData);
+            // Fetch Board Details only on initial load
+            if (reset) {
+                const { data: boardData, error: boardError } = await supabase
+                    .from('boards')
+                    .select('*')
+                    .eq('slug', slug)
+                    .single();
 
-            // Check if current user is the owner
-            const owner = user && boardData.creator_id === user.id;
-            setIsOwner(owner);
+                if (boardError) throw boardError;
+                setBoard(boardData);
+                currentBoard = boardData;
 
-            // Fetch Messages - only show to owner if private
-            if (boardData.settings?.privacy === 'private' && !owner) {
-                // Non-owners of private boards see no messages
+                // Check ownership
+                const owner = user && boardData.creator_id === user.id;
+                setIsOwner(owner);
+
+                // Fetch Stats
+                const { data: statsData, error: statsError } = await supabase
+                    .rpc('get_board_stats', { board_uuid: boardData.id });
+
+                if (!statsError && statsData) {
+                    setStats(statsData);
+                }
+            }
+
+            if (!currentBoard) return;
+
+            // Fetch Messages
+            const owner = user && currentBoard.creator_id === user.id;
+            if (currentBoard.settings?.privacy === 'private' && !owner) {
                 setMessages([]);
             } else {
+                const from = pageNumber * MESSAGES_PER_PAGE;
+                const to = from + MESSAGES_PER_PAGE - 1;
+
                 const { data: msgsData, error: msgsError } = await supabase
                     .from('messages')
                     .select('*, profiles(pseudonym)')
-                    .eq('board_id', boardData.id)
-                    .order('created_at', { ascending: false });
+                    .eq('board_id', currentBoard.id)
+                    .is('parent_id', null)
+                    .order('created_at', { ascending: false })
+                    .range(from, to);
 
                 if (msgsError) throw msgsError;
-                setMessages(msgsData || []);
+
+                if (msgsData.length < MESSAGES_PER_PAGE) {
+                    setHasMore(false);
+                }
+
+                if (reset) {
+                    setMessages(msgsData || []);
+                } else {
+                    setMessages(prev => [...prev, ...(msgsData || [])]);
+                }
+
+                setPage(pageNumber + 1);
             }
 
         } catch (err) {
@@ -64,7 +104,11 @@ const BoardView = () => {
         }
     };
 
-    if (loading) {
+    const lastMessageRef = useInfiniteScroll(() => {
+        fetchBoardData(page);
+    }, hasMore, loading);
+
+    if (loading && !board) {
         return (
             <Layout>
                 <div className="max-w-2xl mx-auto space-y-4">
@@ -91,12 +135,12 @@ const BoardView = () => {
     }
 
     const isPrivate = board.settings?.privacy === 'private';
-    const canShare = !isPrivate || isOwner; // Everyone can share public boards, only owners can share private boards
+    const canShare = !isPrivate || isOwner;
 
     return (
         <Layout>
             <div className="max-w-2xl mx-auto space-y-6">
-                {/* Privacy Notice for Non-Owners of Private Boards */}
+                {/* Privacy Notice */}
                 {isPrivate && !isOwner && (
                     <div className="glass-card bg-yellow-500/10 border-yellow-500/20 border-l-4 border-l-yellow-500">
                         <div className="flex items-start space-x-3">
@@ -116,23 +160,27 @@ const BoardView = () => {
 
                 {/* Board Header */}
                 <div className="glass-card border-l-4 border-l-purple-500">
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                         <div>
-                            <h1 className="text-3xl font-bold mb-2">{board.title}</h1>
-                            <div className="flex items-center space-x-2 text-sm text-secondary">
+                            <h1 className="text-3xl font-bold mb-2 break-words">{board.title}</h1>
+                            <div className="flex flex-wrap items-center gap-2 text-sm text-secondary">
                                 <span className={`px-2 py-0.5 rounded ${isPrivate ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>
                                     {isPrivate ? 'Private' : 'Public'}
                                 </span>
+                                <span>•</span>
+                                <span>{stats.message_count} Messages</span>
+                                <span>•</span>
+                                <span>{stats.reaction_count} Likes</span>
                                 <span>•</span>
                                 <span>Created {new Date(board.created_at).toLocaleDateString()}</span>
                                 {isOwner && <span className="text-purple-400 font-semibold">• You own this board</span>}
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
                             {canShare && (
                                 <button
                                     onClick={() => setShowShareModal(true)}
-                                    className="glass-button flex items-center gap-2 text-sm px-4 py-2"
+                                    className="glass-button flex items-center justify-center gap-2 text-sm px-4 py-2 flex-1 sm:flex-none"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -143,7 +191,7 @@ const BoardView = () => {
                             {user && (
                                 <button
                                     onClick={() => setIsModalOpen(true)}
-                                    className="glass-button bg-white text-black hover:bg-white/90 text-sm px-4 py-2"
+                                    className="glass-button bg-white text-black hover:bg-white/90 text-sm px-4 py-2 flex-1 sm:flex-none"
                                 >
                                     New Post
                                 </button>
@@ -164,20 +212,34 @@ const BoardView = () => {
                             <p>No messages yet. Be the first to speak!</p>
                         </div>
                     ) : (
-                        messages.map((msg) => (
-                            <div key={msg.id} className="glass-card animate-slide-up">
-                                <p className="text-lg mb-4 leading-relaxed">{msg.content}</p>
-                                <div className="flex items-center justify-between text-xs text-secondary font-medium">
-                                    <div className="flex items-center space-x-4">
-                                        <span className="font-bold text-white/80">
-                                            {msg.profiles?.pseudonym || 'Anonymous'}
-                                        </span>
-                                        <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        messages.map((msg, index) => {
+                            const isLast = index === messages.length - 1;
+                            return (
+                                <div
+                                    key={msg.id}
+                                    ref={isLast ? lastMessageRef : null}
+                                    className="glass-card animate-slide-up"
+                                >
+                                    <p className="text-lg mb-4 leading-relaxed">{msg.content}</p>
+                                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-secondary font-medium mb-3">
+                                        <div className="flex items-center space-x-4">
+                                            <span className="font-bold text-white/80">
+                                                {msg.profiles?.pseudonym || 'Anonymous'}
+                                            </span>
+                                            <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                        </div>
+                                        <ReplyButton messageId={msg.id} replyCount={msg.reply_count} />
                                     </div>
+                                    <MessageReactions messageId={msg.id} />
                                 </div>
-                                <MessageReactions messageId={msg.id} />
-                            </div>
-                        ))
+                            );
+                        })
+                    )}
+
+                    {loading && messages.length > 0 && (
+                        <div className="glass-card animate-pulse h-32 flex items-center justify-center text-secondary">
+                            Loading more...
+                        </div>
                     )}
                 </div>
             </div>
@@ -185,7 +247,11 @@ const BoardView = () => {
             <CreatePostModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onSuccess={fetchBoardData}
+                onSuccess={() => {
+                    setPage(0);
+                    setHasMore(true);
+                    fetchBoardData(0, true);
+                }}
                 boardId={board.id}
             />
 
