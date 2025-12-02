@@ -160,8 +160,8 @@ const BoardView = () => {
 
                 {/* Board Header */}
                 <div className="glass-card border-l-4 border-l-purple-500">
-                    <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                        <div>
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                        <div className="flex-1 min-w-0">
                             <h1 className="text-3xl font-bold mb-2 break-words">{board.title}</h1>
                             <div className="flex flex-wrap items-center gap-2 text-sm text-secondary">
                                 <span className={`px-2 py-0.5 rounded ${isPrivate ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>
@@ -176,7 +176,7 @@ const BoardView = () => {
                                 {isOwner && <span className="text-purple-400 font-semibold">• You own this board</span>}
                             </div>
                         </div>
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <div className="flex items-center gap-2 w-full md:w-auto flex-shrink-0">
                             {canShare && (
                                 <button
                                     onClick={() => setShowShareModal(true)}
