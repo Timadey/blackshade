@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
+import { Link } from 'react-router-dom';
 
 const Landing = () => {
     const navigate = useNavigate();
@@ -52,7 +53,7 @@ const Landing = () => {
                             disabled={loading}
                             className="glass-button text-lg px-8 py-4 bg-white text-black hover:bg-white/90 w-full sm:w-auto"
                         >
-                            {loading ? 'Entering Shadows...' : 'Enter Anonymously'}
+                            {loading ? '👻 Entering Shadows...' : '🎭 Enter Anonymously'}
                         </button>
 
                         <div className="max-w-md mx-auto mt-6 text-sm text-secondary space-y-2 bg-white/5 p-4 rounded-lg border border-white/10">
@@ -66,7 +67,7 @@ const Landing = () => {
                     </div>
 
                     <p className="text-xs text-secondary/50 pt-8">
-                        By continuing, you agree to our Terms of Service and Privacy Policy.
+                        By continuing, you agree to our <Link to="/terms" className="underline hover:text-white">Terms of Service</Link> and <Link to="/privacy" className="underline hover:text-white">Privacy Policy</Link>.
                         <br />
                         <span className="font-semibold">We do not collect or store any personal data.</span>
                         <br />
