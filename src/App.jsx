@@ -10,6 +10,8 @@ import Landing from './pages/Landing';
 import LoadingScreen from './components/LoadingScreen';
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 import { registerServiceWorker, subscribeToPushNotifications } from './lib/pushNotifications';
 
@@ -38,7 +40,9 @@ function AppContent() {
       <Route path="/create-board" element={user ? <CreateBoard /> : <Landing />} />
       <Route path="/b/:slug" element={<BoardView />} />
       <Route path="/thread/:messageId" element={<ThreadView />} />
-    </Routes>
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsOfService />} />
+    </Routes >
   );
 }
 
