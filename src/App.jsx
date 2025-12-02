@@ -8,6 +8,8 @@ import BoardView from './pages/BoardView';
 import ThreadView from './pages/ThreadView';
 import Landing from './pages/Landing';
 import LoadingScreen from './components/LoadingScreen';
+import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 import { registerServiceWorker, subscribeToPushNotifications } from './lib/pushNotifications';
 
@@ -46,6 +48,8 @@ function App() {
       <Router>
         <AppContent />
       </Router>
+      <Analytics />
+      <SpeedInsights />
     </AuthProvider>
   );
 }
