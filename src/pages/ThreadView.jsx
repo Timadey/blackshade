@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
 import MessageReactions from '../components/MessageReactions';
 import ReplyButton from '../components/ReplyButton';
+import ShareMessageModal from '../components/ShareMessageModal';
 
 import useInfiniteScroll from '../hooks/useInfiniteScroll';
 
@@ -17,6 +18,7 @@ const ThreadView = () => {
     const [loading, setLoading] = useState(true);
     const [replyContent, setReplyContent] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [shareMessage, setShareMessage] = useState(null);
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const REPLIES_PER_PAGE = 20;
@@ -34,7 +36,7 @@ const ThreadView = () => {
             if (reset) {
                 const { data: parentData, error: parentError } = await supabase
                     .from('messages')
-                    .select('*, profiles(pseudonym)')
+                    .select('*, profiles(pseudonym), boards(title, slug)')
                     .eq('id', messageId)
                     .single();
 
@@ -164,8 +166,18 @@ const ThreadView = () => {
                             <p className="text-lg leading-relaxed">{parentMessage.content}</p>
                         </div>
                     </div>
-                    <div className="text-xs text-secondary mb-2">
-                        {new Date(parentMessage.created_at).toLocaleString()}
+                    <div className="flex items-center justify-between text-xs text-secondary mb-2">
+                        <span>{new Date(parentMessage.created_at).toLocaleString()}</span>
+                        <button
+                            onClick={() => setShareMessage(parentMessage)}
+                            className="hover:text-white transition-colors flex items-center gap-1"
+                            title="Share as Image"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                            </svg>
+                            Share
+                        </button>
                     </div>
                     <MessageReactions messageId={parentMessage.id} />
                 </div>
@@ -226,7 +238,7 @@ const ThreadView = () => {
                                     <button
                                         type="submit"
                                         disabled={!replyContent.trim() || submitting}
-                                        className="glass-button bg-white text-black hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="glass-button bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {submitting ? 'Posting...' : 'Reply'}
                                     </button>
@@ -236,6 +248,13 @@ const ThreadView = () => {
                     </form>
                 )}
             </div>
+
+            <ShareMessageModal
+                isOpen={!!shareMessage}
+                onClose={() => setShareMessage(null)}
+                message={shareMessage}
+                boardTitle={parentMessage?.boards?.title}
+            />
         </Layout>
     );
 };

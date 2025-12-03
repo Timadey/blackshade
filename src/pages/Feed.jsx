@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
 import CreatePostModal from '../components/CreatePostModal';
 import MessageReactions from '../components/MessageReactions';
 import ReplyButton from '../components/ReplyButton';
+import ShareMessageModal from '../components/ShareMessageModal';
 
 import useInfiniteScroll from '../hooks/useInfiniteScroll';
 
@@ -12,6 +12,7 @@ const Feed = () => {
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [shareMessage, setShareMessage] = useState(null);
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const MESSAGES_PER_PAGE = 20;
@@ -30,7 +31,7 @@ const Feed = () => {
 
             const { data, error } = await supabase
                 .from('messages')
-                .select('*, profiles(pseudonym)')
+                .select('*, profiles(pseudonym), boards(title, slug)')
                 .is('board_id', null)
                 .is('parent_id', null)
                 .order('created_at', { ascending: false })
@@ -107,7 +108,18 @@ const Feed = () => {
                                         </span>
                                         <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
-                                    <ReplyButton messageId={msg.id} replyCount={msg.reply_count} />
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={() => setShareMessage(msg)}
+                                            className="hover:text-white transition-colors"
+                                            title="Share as Image"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                            </svg>
+                                        </button>
+                                        <ReplyButton messageId={msg.id} replyCount={msg.reply_count} />
+                                    </div>
                                 </div>
                                 <MessageReactions messageId={msg.id} />
                             </div>
@@ -132,6 +144,13 @@ const Feed = () => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSuccess={handleRefresh}
+            />
+
+            <ShareMessageModal
+                isOpen={!!shareMessage}
+                onClose={() => setShareMessage(null)}
+                message={shareMessage}
+                boardTitle={shareMessage?.boards?.title}
             />
         </Layout>
     );

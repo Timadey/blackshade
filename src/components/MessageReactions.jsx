@@ -73,6 +73,25 @@ const MessageReactions = ({ messageId }) => {
         setShowPicker(false);
 
         try {
+            // Ensure profile exists before reacting (fixes foreign key violation)
+            const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('id', user.id)
+                .single();
+
+            if (!profileData) {
+                // Create profile if missing (race condition or trigger failure)
+                const { error: insertProfileError } = await supabase
+                    .from('profiles')
+                    .insert([{ id: user.id, pseudonym: 'Anonymous' }]);
+
+                if (insertProfileError && insertProfileError.code !== '23505') { // Ignore unique violation
+                    console.error('Failed to create profile for reaction:', insertProfileError);
+                    throw insertProfileError;
+                }
+            }
+
             // Check if user already reacted with this emoji
             const existingReaction = reactions.find(r => r.emoji === emoji && r.userReacted);
 
@@ -121,6 +140,7 @@ const MessageReactions = ({ messageId }) => {
             await fetchReactions();
         } catch (error) {
             console.error('Error handling reaction:', error);
+            alert('Failed to add reaction. Please try again.');
         } finally {
             setLoading(false);
         }
