@@ -6,6 +6,7 @@ import Layout from '../components/Layout';
 import MessageReactions from '../components/MessageReactions';
 import ReplyButton from '../components/ReplyButton';
 import ShareMessageModal from '../components/ShareMessageModal';
+import CreatePostModal from '../components/CreatePostModal';
 
 import useInfiniteScroll from '../hooks/useInfiniteScroll';
 
@@ -19,6 +20,7 @@ const ThreadView = () => {
     const [replyContent, setReplyContent] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [shareMessage, setShareMessage] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const REPLIES_PER_PAGE = 20;
@@ -143,7 +145,7 @@ const ThreadView = () => {
 
     return (
         <Layout>
-            <div className="max-w-2xl mx-auto space-y-6">
+            <div className={`max-w-2xl mx-auto space-y-6 ${!user ? 'pb-24' : ''}`}>
                 {/* Back Button */}
                 <button
                     onClick={() => navigate(-1)}
@@ -255,6 +257,35 @@ const ThreadView = () => {
                 message={shareMessage}
                 boardTitle={parentMessage?.boards?.title}
             />
+
+            <CreatePostModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSuccess={() => {
+                    setIsModalOpen(false);
+                }}
+                boardId={parentMessage?.board_id}
+            />
+
+            {/* Sticky Footer for Guests */}
+            {!user && (
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-black/80 backdrop-blur-md border-t border-white/10 z-50 animate-slide-up">
+                    <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="text-center sm:text-left">
+                            <h3 className="font-bold text-white">Join the Conversation</h3>
+                            <p className="text-sm text-secondary">
+                                Post anonymously. No account needed.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="glass-button bg-white/10 text-white hover:bg-white/20 whitespace-nowrap px-6"
+                        >
+                            Add New Post
+                        </button>
+                    </div>
+                </div>
+            )}
         </Layout>
     );
 };
