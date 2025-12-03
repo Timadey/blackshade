@@ -7,6 +7,7 @@ import CreatePostModal from '../components/CreatePostModal';
 import BoardShareModal from '../components/BoardShareModal';
 import MessageReactions from '../components/MessageReactions';
 import ReplyButton from '../components/ReplyButton';
+import ShareMessageModal from '../components/ShareMessageModal';
 
 import useInfiniteScroll from '../hooks/useInfiniteScroll';
 
@@ -20,6 +21,7 @@ const BoardView = () => {
     const [stats, setStats] = useState({ message_count: 0, reaction_count: 0 });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
+    const [shareMessage, setShareMessage] = useState(null);
     const [error, setError] = useState(null);
     const [isOwner, setIsOwner] = useState(false);
     const [page, setPage] = useState(0);
@@ -191,7 +193,7 @@ const BoardView = () => {
                             {user && (
                                 <button
                                     onClick={() => setIsModalOpen(true)}
-                                    className="glass-button bg-white text-black hover:bg-white/90 text-sm px-4 py-2 flex-1 sm:flex-none"
+                                    className="glass-button bg-white/10 text-white hover:bg-white/20 text-sm px-4 py-2 flex-1 sm:flex-none"
                                 >
                                     New Post
                                 </button>
@@ -228,7 +230,18 @@ const BoardView = () => {
                                             </span>
                                             <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
-                                        <ReplyButton messageId={msg.id} replyCount={msg.reply_count} />
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                onClick={() => setShareMessage(msg)}
+                                                className="hover:text-white transition-colors"
+                                                title="Share as Image"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                                </svg>
+                                            </button>
+                                            <ReplyButton messageId={msg.id} replyCount={msg.reply_count} />
+                                        </div>
                                     </div>
                                     <MessageReactions messageId={msg.id} />
                                 </div>
@@ -260,6 +273,33 @@ const BoardView = () => {
                 onClose={() => setShowShareModal(false)}
                 board={board}
             />
+
+            <ShareMessageModal
+                isOpen={!!shareMessage}
+                onClose={() => setShareMessage(null)}
+                message={shareMessage}
+                boardTitle={board.title}
+            />
+
+            {/* Sticky Footer for Guests */}
+            {!user && (
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-black/80 backdrop-blur-md border-t border-white/10 z-50 animate-slide-up">
+                    <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="text-center sm:text-left">
+                            <h3 className="font-bold text-white">Join the Conversation</h3>
+                            <p className="text-sm text-secondary">
+                                Post anonymously. No account needed.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="glass-button bg-white/10 text-white hover:bg-white/20 whitespace-nowrap px-6"
+                        >
+                            Add New Post
+                        </button>
+                    </div>
+                </div>
+            )}
         </Layout>
     );
 };

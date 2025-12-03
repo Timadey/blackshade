@@ -23,14 +23,18 @@ const Dashboard = () => {
 
         setLoading(true);
         try {
+            // Use the RPC function to get boards the user has interacted with
+            // Note: Pagination for RPC returning SETOF is tricky with range(), 
+            // so we might fetch all or handle it differently. 
+            // For now, let's try fetching all (assuming user interaction history isn't massive yet)
+            // or we can modify the RPC to accept limit/offset.
+
+            // Actually, Supabase RPC supports range() if it returns a set.
             const from = pageNumber * BOARDS_PER_PAGE;
             const to = from + BOARDS_PER_PAGE - 1;
 
             const { data, error } = await supabase
-                .from('boards')
-                .select('*')
-                .eq('creator_id', user.id)
-                .order('created_at', { ascending: false })
+                .rpc('get_user_interacted_boards', { user_uuid: user.id })
                 .range(from, to);
 
             if (error) throw error;
@@ -80,7 +84,7 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                <h3 className="text-xl font-bold mt-12 mb-6">Your Boards</h3>
+                <h3 className="text-xl font-bold mt-12 mb-6">Your Boards & Interactions</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {boards.map((board, index) => {
                         const isLast = index === boards.length - 1;

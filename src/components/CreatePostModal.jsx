@@ -11,10 +11,21 @@ const CreatePostModal = ({ isOpen, onClose, onSuccess, boardId = null }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!content.trim() || !user) return;
+        if (!content.trim()) return;
 
         setLoading(true);
         try {
+            // Handle Guest User: Create anonymous account first
+            let currentUser = user;
+            if (!currentUser) {
+                const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
+                if (authError) throw authError;
+                currentUser = authData.user;
+
+                // Wait a moment for profile trigger/creation if needed, 
+                // though usually we can just use the user.id immediately.
+            }
+
             // Get current location only if it's a general feed post (no boardId)
             let location = null;
             if (!boardId && navigator.geolocation) {
@@ -33,7 +44,7 @@ const CreatePostModal = ({ isOpen, onClose, onSuccess, boardId = null }) => {
                 .from('messages')
                 .insert([
                     {
-                        author_id: profile?.id || user.id,
+                        author_id: currentUser.id, // Use the (potentially new) user ID
                         board_id: boardId,
                         content,
                         location
@@ -47,7 +58,7 @@ const CreatePostModal = ({ isOpen, onClose, onSuccess, boardId = null }) => {
             onClose();
         } catch (error) {
             console.error('Error creating post:', error);
-            alert('Failed to post message');
+            alert('Failed to post message. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -66,6 +77,12 @@ const CreatePostModal = ({ isOpen, onClose, onSuccess, boardId = null }) => {
                 </button>
 
                 <h3 className="text-xl font-bold mb-4">Speak Freely</h3>
+
+                {!user && (
+                    <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-sm text-blue-200">
+                        <p>An anonymous account will be created for you automatically when you post.</p>
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit}>
                     <textarea
