@@ -141,7 +141,7 @@ const BoardView = () => {
 
     return (
         <Layout>
-            <div className="max-w-2xl mx-auto space-y-6">
+            <div className={`max-w-2xl mx-auto space-y-6 ${!user ? 'pb-24' : ''}`}>
                 {/* Privacy Notice */}
                 {isPrivate && !isOwner && (
                     <div className="glass-card bg-yellow-500/10 border-yellow-500/20 border-l-4 border-l-yellow-500">
