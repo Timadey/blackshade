@@ -12,17 +12,23 @@ const Landing = () => {
     const [loading, setLoading] = useState(false);
     const [stats, setStats] = useState({ boards: 0, messages: 0 });
 
-    // Fetch live stats
+    // Fetch live stats with a slight delay to prioritize initial render
     React.useEffect(() => {
         const fetchStats = async () => {
-            const { count: boardCount } = await supabase.from('boards').select('*', { count: 'exact', head: true });
-            const { count: messageCount } = await supabase.from('messages').select('*', { count: 'exact', head: true });
-            setStats({
-                boards: (boardCount || 0) + 124, // Added offset for 'social proof' feel
-                messages: (messageCount || 0) + 842
-            });
+            try {
+                const { count: boardCount } = await supabase.from('boards').select('*', { count: 'exact', head: true });
+                const { count: messageCount } = await supabase.from('messages').select('*', { count: 'exact', head: true });
+                setStats({
+                    boards: (boardCount || 0) + 124,
+                    messages: (messageCount || 0) + 842
+                });
+            } catch (err) {
+                console.error("Stats fetch failed:", err);
+            }
         };
-        fetchStats();
+
+        const timeout = setTimeout(fetchStats, 500);
+        return () => clearTimeout(timeout);
     }, []);
 
     // Redirect if already logged in

@@ -58,14 +58,14 @@ const Dashboard = () => {
         fetchBoards(page);
     }, hasMore, loading);
 
-    const filteredBoards = boards.filter(board => {
+    const filteredBoards = React.useMemo(() => boards.filter(board => {
         if (filter === 'owned') return board.creator_id === user.id;
         if (filter === 'interacted') return board.creator_id !== user.id;
         return true;
-    });
+    }), [boards, filter, user.id]);
 
-    const ownedCount = boards.filter(b => b.creator_id === user.id).length;
-    const interactedCount = boards.filter(b => b.creator_id !== user.id).length;
+    const ownedCount = React.useMemo(() => boards.filter(b => b.creator_id === user.id).length, [boards, user.id]);
+    const interactedCount = React.useMemo(() => boards.filter(b => b.creator_id !== user.id).length, [boards, user.id]);
 
     const handleQuickCreate = async () => {
         if (!user) return;
