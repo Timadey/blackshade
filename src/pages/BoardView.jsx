@@ -220,24 +220,6 @@ const BoardView = () => {
                 ogType="article"
             />
             <div className={`max-w-2xl mx-auto space-y-6 ${!user ? 'pb-24' : ''}`}>
-                {/* Privacy Notice */}
-                {isPrivate && !isOwner && (
-                    <div className="glass-card bg-yellow-500/10 border-yellow-500/20 border-l-4 border-l-yellow-500">
-                        <div className="flex items-start space-x-3">
-                            <svg className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                            <div>
-                                <h3 className="font-semibold text-yellow-400 mb-1">Private Board</h3>
-                                <p className="text-sm text-secondary">
-                                    This is a private board. Only the board owner can see messages posted here.
-                                    Your message will be <span className="font-semibold text-primary">completely anonymous</span> to the owner.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 {/* Board Header */}
                 <div className="glass-card border-none relative overflow-hidden p-6 md:p-8">
                     {/* Background Flare */}
@@ -357,7 +339,7 @@ const BoardView = () => {
                     {isPrivate && !isOwner ? (
                         <div className="text-center py-12 text-secondary">
                             <p className="mb-2">Your messages are visible only to the board owner.</p>
-                            <p className="text-sm">Send anonymously using the button below.</p>
+                            <p className="text-sm">Send anonymously using the box above.</p>
                         </div>
                     ) : messages.length === 0 ? (
                         <div className="text-center py-12 text-secondary">
@@ -480,25 +462,42 @@ const BoardView = () => {
                 boardTitle={board.title}
             />
 
-            {/* Sticky Footer for Guests */}
-            {!user && (
-                <div className="fixed bottom-0 left-0 right-0 p-4 bg-black/80 backdrop-blur-md border-t border-white/10 z-50 animate-slide-up">
-                    <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div className="text-center sm:text-left">
-                            <h3 className="font-bold text-white">Join the Conversation</h3>
+            {/* Privacy Notice */}
+            {isPrivate && !isOwner && (
+                <div className="glass-card bg-yellow-500/10 border-yellow-500/20 border-l-4 border-l-yellow-500">
+                    <div className="flex items-start space-x-3">
+                        <svg className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div>
+                            <h3 className="font-semibold text-yellow-400 mb-1">Private Board</h3>
                             <p className="text-sm text-secondary">
-                                Post anonymously. No account needed.
+                                This is a private board. Only the board owner can see messages posted here.
+                                Your message will be <span className="font-semibold text-primary">completely anonymous</span> to the owner.
                             </p>
                         </div>
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="glass-button bg-white text-gray-400 hover:bg-white/90 whitespace-nowrap px-6 font-bold"
-                        >
-                            Send Anonymously
-                        </button>
                     </div>
                 </div>
             )}
+            {/* Sticky Footer for Guests */}
+            {/*{!user && (*/}
+            {/*    <div className="fixed bottom-0 left-0 right-0 p-4 bg-black/80 backdrop-blur-md border-t border-white/10 z-50 animate-slide-up">*/}
+            {/*        <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">*/}
+            {/*            <div className="text-center sm:text-left">*/}
+            {/*                <h3 className="font-bold text-white">Join the Conversation</h3>*/}
+            {/*                <p className="text-sm text-secondary">*/}
+            {/*                    Post anonymously. No account needed.*/}
+            {/*                </p>*/}
+            {/*            </div>*/}
+            {/*            <button*/}
+            {/*                onClick={() => setIsModalOpen(true)}*/}
+            {/*                className="glass-button bg-white text-gray-400 hover:bg-white/90 whitespace-nowrap px-6 font-bold"*/}
+            {/*            >*/}
+            {/*                Send Anonymously*/}
+            {/*            </button>*/}
+            {/*        </div>*/}
+            {/*    </div>*/}
+            {/*)}*/}
         </Layout>
     );
 };
