@@ -58,7 +58,7 @@ const CreateBoard = () => {
     return (
         <Layout>
             <div className="max-w-xl mx-auto">
-                <h2 className="text-3xl font-bold mb-8">Create a New Board</h2>
+                <h2 className="text-3xl font-bold mb-8">New Anonymous Board</h2>
 
                 <form onSubmit={handleSubmit} className="glass-card space-y-6">
                     <div>
@@ -106,7 +106,7 @@ const CreateBoard = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="glass-button w-full bg-white text-black hover:bg-white/90 disabled:opacity-50"
+                            className="glass-button w-full bg-white text-gray-400 hover:bg-white/90 disabled:opacity-50"
                         >
                             {loading ? 'Creating...' : 'Create Board'}
                         </button>

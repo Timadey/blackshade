@@ -34,7 +34,8 @@ function AppContent() {
 
   return (
     <Routes>
-      <Route path="/" element={user ? <Feed /> : <Landing />} />
+      <Route path="/" element={user ? <Dashboard /> : <Landing />} />
+        <Route path="/home" element={ <Landing />} />
       <Route path="/feed" element={user ? <Feed /> : <Landing />} />
       <Route path="/dashboard" element={user ? <Dashboard /> : <Landing />} />
       <Route path="/create-board" element={user ? <CreateBoard /> : <Landing />} />

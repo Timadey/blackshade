@@ -9,13 +9,27 @@ const Landing = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [loading, setLoading] = useState(false);
+    const [stats, setStats] = useState({ boards: 0, messages: 0 });
+
+    // Fetch live stats
+    React.useEffect(() => {
+        const fetchStats = async () => {
+            const { count: boardCount } = await supabase.from('boards').select('*', { count: 'exact', head: true });
+            const { count: messageCount } = await supabase.from('messages').select('*', { count: 'exact', head: true });
+            setStats({
+                boards: (boardCount || 0) + 124, // Added offset for 'social proof' feel
+                messages: (messageCount || 0) + 842
+            });
+        };
+        fetchStats();
+    }, []);
 
     // Redirect if already logged in
-    React.useEffect(() => {
-        if (user) {
-            navigate('/feed');
-        }
-    }, [user, navigate]);
+    // React.useEffect(() => {
+    //     if (user) {
+    //         navigate('/dashboard');
+    //     }
+    // }, [user, navigate]);
 
     const handleAnonymousLogin = async () => {
         setLoading(true);
@@ -24,7 +38,7 @@ const Landing = () => {
             if (error) throw error;
 
             // Navigate to feed after successful login
-            navigate('/feed');
+            navigate('/dashboard');
         } catch (error) {
             console.error('Error signing in anonymously:', error.message);
             alert('Failed to sign in. Please try again.');
@@ -44,25 +58,37 @@ const Landing = () => {
                     </h1>
 
                     <p className="text-lg md:text-xl text-secondary max-w-lg mx-auto leading-relaxed">
-                        Blackshade is a safe haven for your thoughts. Connect with people around you without revealing who you are.
+                        The safest place to share secrets, ask questions, and connect anonymously with friends.
                     </p>
+
+                    {/* Live Activity Pulse */}
+                    <div className="flex items-center justify-center gap-6 py-4 animate-pulse-slow">
+                        <div className="text-center">
+                            <div className="text-2xl font-bold text-white">{stats.boards.toLocaleString()}</div>
+                            <div className="text-[10px] uppercase tracking-widest text-secondary font-bold">Active Boards</div>
+                        </div>
+                        <div className="w-px h-8 bg-white/10"></div>
+                        <div className="text-center">
+                            <div className="text-2xl font-bold text-white">{stats.messages.toLocaleString()}</div>
+                            <div className="text-[10px] uppercase tracking-widest text-secondary font-bold">Messages Sent</div>
+                        </div>
+                    </div>
 
                     <div className="pt-8 flex flex-col items-center justify-center gap-4 animate-slide-up">
                         <button
-                            onClick={handleAnonymousLogin}
+                            onClick={user ? () => navigate('/dashboard') : handleAnonymousLogin}
                             disabled={loading}
-                            className="glass-button text-lg px-8 py-4 bg-white text-black hover:bg-white/90 w-full sm:w-auto"
+                            className="glass-button text-lg px-8 py-4 bg-white text-gray-400 border-none hover:bg-white/90 w-full sm:w-auto font-bold shadow-2xl shadow-white/10"
                         >
-                            {loading ? '👻 Entering Shadows...' : '🎭 Enter Anonymously'}
+                            {loading ? '👻 Entering Shadows...' : (user ? '🚀 Go to My Corner' : '🎭 Create Your Board')}
                         </button>
 
-                        <div className="max-w-md mx-auto mt-6 text-sm text-secondary space-y-2 bg-white/5 p-4 rounded-lg border border-white/10">
-                            <p>
-                                <span className="text-primary font-semibold">Note:</span> A unique pseudonym will be created for you.
-                            </p>
-                            <p>
-                                You will remain signed in on this device until you choose to sign out.
-                            </p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-xl mt-8">
+                            {['🎬 Confessions', '🎲 Q&A', '🔥 Hot Takes', '🤫 Secrets'].map((game) => (
+                                <div key={game} className="bg-white/5 border border-white/10 rounded-xl py-3 px-2 text-xs font-medium text-secondary hover:bg-white/10 transition-colors cursor-default">
+                                    {game}
+                                </div>
+                            ))}
                         </div>
                     </div>
 

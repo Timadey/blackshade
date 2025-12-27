@@ -71,7 +71,7 @@ const Feed = () => {
         <Layout>
             <div className="max-w-2xl mx-auto space-y-6">
                 <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-2xl font-bold">Global Feed</h2>
+                    <h2 className="text-2xl font-bold">Public Anonymous Feed</h2>
                 </div>
 
                 {/* Create Post Input Trigger */}
@@ -83,7 +83,7 @@ const Feed = () => {
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex-shrink-0" />
                         <input
                             type="text"
-                            placeholder="What's happening around you?"
+                            placeholder="Rant, Confess, or Scrutinize..."
                             className="bg-transparent border-none focus:ring-0 text-primary placeholder-secondary w-full cursor-pointer pointer-events-none"
                             readOnly
                         />

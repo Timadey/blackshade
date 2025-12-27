@@ -1,9 +1,13 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { toPng } from 'html-to-image';
+import { generatePseudonym, getRandomBackground } from '../lib/PseudoGenerator';
 
 const ShareMessageModal = ({ isOpen, onClose, message, boardTitle }) => {
     const cardRef = useRef(null);
     const [loading, setLoading] = useState(false);
+
+    const stickerBg = useMemo(() => getRandomBackground(message?.id), [message?.id]);
+    const pseudonym = useMemo(() => message?.profiles?.pseudonym || generatePseudonym(message?.id), [message?.id, message?.profiles?.pseudonym]);
 
     if (!isOpen || !message) return null;
 
@@ -12,120 +16,114 @@ const ShareMessageModal = ({ isOpen, onClose, message, boardTitle }) => {
         setLoading(true);
 
         try {
-            // 1. Generate Image
             const dataUrl = await toPng(cardRef.current, {
                 cacheBust: true,
-                pixelRatio: 2, // High res
-                backgroundColor: '#000000', // Ensure black background
+                pixelRatio: 3, // Even higher res for stickers
+                backgroundColor: 'transparent', // Good for stickers
             });
 
-            // 2. Prepare Caption
             const shareUrl = `${window.location.origin}/thread/${message.id}`;
-            const caption = `Check out this post on Blackshade: ${shareUrl}`;
+            const caption = `Anonymous message on Blackshade: ${shareUrl}`;
 
-            // 3. Share or Download
             if (navigator.share) {
-                // Convert DataURL to Blob for sharing
                 const blob = await (await fetch(dataUrl)).blob();
-                const file = new File([blob], 'blackshade-post.png', { type: 'image/png' });
+                const file = new File([blob], 'blackshade.png', { type: 'image/png' });
 
                 await navigator.share({
-                    title: 'Blackshade Post',
+                    title: 'Blackshade',
                     text: caption,
                     files: [file],
-                    url: shareUrl // Some apps use this, some use text
                 });
             } else {
-                // Fallback for desktop: Download image and copy link
                 const link = document.createElement('a');
-                link.download = 'blackshade-post.png';
+                link.download = 'blackshade.png';
                 link.href = dataUrl;
                 link.click();
-
                 await navigator.clipboard.writeText(caption);
-                alert('Image downloaded and link copied to clipboard!');
+                alert('Sticker saved and link copied!');
             }
-
             onClose();
         } catch (error) {
             console.error('Error sharing:', error);
-            alert('Failed to generate share image. Please try again.');
+            alert('Failed to share sticker.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-            <div className="w-full max-w-md relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md animate-fade-in">
+            <div className="w-full max-w-sm relative">
                 <button
                     onClick={onClose}
-                    className="absolute -top-12 right-0 text-white/50 hover:text-white"
+                    className="absolute -top-12 right-0 text-white/50 hover:text-white bg-white/10 rounded-full p-2"
                 >
-                    Close
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                 </button>
 
-                {/* Preview Area */}
-                <div className="mb-6 overflow-hidden rounded-xl shadow-2xl border border-white/10">
-                    {/* The Card to be Captured */}
+                {/* Sticker Preview */}
+                <div className="mb-8 flex justify-center">
                     <div
                         ref={cardRef}
-                        className="bg-gradient-to-br from-gray-900 to-black p-8 relative overflow-hidden"
-                        style={{ minHeight: '300px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
+                        className={`${stickerBg} w-[340px] min-h-[340px] rounded-[50px] p-10 flex flex-col justify-between shadow-[0_30px_60px_rgba(0,0,0,0.4)] relative overflow-hidden`}
                     >
-                        {/* Background Elements */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -ml-10 -mb-10"></div>
+                        {/* Glass Overlay for depth */}
+                        <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px]"></div>
 
-                        {/* Content */}
+                        {/* Decorative Circles */}
+                        <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+                        <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-black/10 rounded-full blur-3xl"></div>
+
                         <div className="relative z-10">
-                            <div className="flex items-center gap-2 mb-6 text-white/50 text-sm font-medium uppercase tracking-wider">
-                                <span className="text-xl">🕶</span>
-                                <span>Blackshade</span>
+                            <div className="flex items-center gap-2 mb-6">
+                                <div className="bg-white/20 backdrop-blur-md p-2 rounded-2xl shadow-inner flex items-center justify-center">
+                                    <span className="text-xl">🕶️</span>
+                                </div>
+                                <span className="text-white font-black tracking-tighter text-xl uppercase">blackshade</span>
                             </div>
 
-                            <p className="text-2xl font-bold text-white leading-relaxed mb-8 font-serif">
-                                "{message.content}"
+                            <p className={`font-black text-white leading-[1.2] drop-shadow-2xl transition-all break-words ${message.content.length > 100 ? 'text-xl' :
+                                message.content.length > 50 ? 'text-2xl' :
+                                    'text-4xl'
+                                }`}>
+                                {message.content}
                             </p>
+                        </div>
 
-                            <div className="border-t border-white/10 pt-4">
-                                <div className="flex justify-between items-end mb-4">
-                                    <div>
-                                        <p className="text-white/80 font-bold text-sm">
-                                            {message.profiles?.pseudonym || 'Anonymous'}
-                                        </p>
-                                        <p className="text-white/40 text-xs mt-1">
-                                            {boardTitle ? `in ${boardTitle}` : 'on Blackshade'}
-                                        </p>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="text-xs text-white/30">
-                                            blackshade.site
-                                        </div>
-                                    </div>
-                                </div>
+                        <div className="relative z-10 flex justify-between items-end mt-8">
+                            <div>
+                                <p className="text-white font-black text-[10px] bg-black/30 backdrop-blur-md px-2 py-1 rounded-2xl inline-block border border-white/10 uppercase tracking-widest shadow-lg">
+                                    @{pseudonym.split(' ').join('_').toLowerCase()}
+                                </p>
+                            </div>
+                            <div className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] py-1">
+                                blackshade.site
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Actions */}
-                <button
-                    onClick={handleShare}
-                    disabled={loading}
-                    className="w-full glass-button bg-white/10 text-white hover:bg-white/20 py-4 font-bold text-lg flex items-center justify-center gap-2"
-                >
-                    {loading ? (
-                        <>Generating...</>
-                    ) : (
-                        <>
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                            </svg>
-                            Share Image
-                        </>
-                    )}
-                </button>
+                <div className="space-y-3">
+                    <button
+                        onClick={handleShare}
+                        disabled={loading}
+                        className="w-full bg-white text-gray-400 hover:bg-white/90 py-4 rounded-2xl font-bold text-lg shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3"
+                    >
+                        {loading ? 'Designing...' : (
+                            <>
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                </svg>
+                                Share to Story
+                            </>
+                        )}
+                    </button>
+                    <p className="text-center text-white/40 text-xs">
+                        Download sticker and share on Instagram/TikTok
+                    </p>
+                </div>
             </div>
         </div>
     );

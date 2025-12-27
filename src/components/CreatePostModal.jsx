@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { getRandomPrompt } from '../lib/PseudoGenerator';
 
 const CreatePostModal = ({ isOpen, onClose, onSuccess, boardId = null }) => {
     const { user, profile } = useAuth();
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(false);
+    const [prompt, setPrompt] = useState(getRandomPrompt());
 
     if (!isOpen) return null;
 
@@ -21,9 +23,26 @@ const CreatePostModal = ({ isOpen, onClose, onSuccess, boardId = null }) => {
                 const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
                 if (authError) throw authError;
                 currentUser = authData.user;
+            }
 
-                // Wait a moment for profile trigger/creation if needed, 
-                // though usually we can just use the user.id immediately.
+            // 1. Ensure Profile exists (Race condition check)
+            // This is critical for guest users where the profile trigger might be delayed
+            let activeProfile = profile;
+            if (!activeProfile || activeProfile.id !== currentUser.id) {
+                // Try one immediate fetch if profile is missing from context or mismatched
+                const { data: pf } = await supabase.from('profiles').select('id').eq('id', currentUser.id).single();
+                activeProfile = pf;
+
+                // If still missing, wait a tiny bit and try one more time
+                if (!activeProfile) {
+                    await new Promise(r => setTimeout(r, 500));
+                    const { data: pf2 } = await supabase.from('profiles').select('id').eq('id', currentUser.id).single();
+                    activeProfile = pf2;
+                }
+            }
+
+            if (!activeProfile) {
+                throw new Error("Initializing your anonymous identity... please try again in a second.");
             }
 
             // Get current location only if it's a general feed post (no boardId)
@@ -44,7 +63,7 @@ const CreatePostModal = ({ isOpen, onClose, onSuccess, boardId = null }) => {
                 .from('messages')
                 .insert([
                     {
-                        author_id: currentUser.id, // Use the (potentially new) user ID
+                        author_id: activeProfile.id, // Use the verified profile ID
                         board_id: boardId,
                         content,
                         location
@@ -85,21 +104,31 @@ const CreatePostModal = ({ isOpen, onClose, onSuccess, boardId = null }) => {
                 )}
 
                 <form onSubmit={handleSubmit}>
-                    <textarea
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        placeholder="What's on your mind?"
-                        className="glass-input w-full h-32 resize-none mb-4 p-4"
-                        required
-                    />
+                    <div className="relative mb-4">
+                        <textarea
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
+                            placeholder={prompt}
+                            className="glass-input w-full h-32 resize-none p-4 pb-12"
+                            required
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setPrompt(getRandomPrompt())}
+                            className="absolute bottom-4 left-4 p-2 bg-white/5 hover:bg-white/10 rounded-full transition-colors text-xl"
+                            title="Random Prompt"
+                        >
+                            🎲
+                        </button>
+                    </div>
 
                     <div className="flex justify-end">
                         <button
                             type="submit"
                             disabled={loading}
-                            className="glass-button bg-white text-black hover:bg-white/90 disabled:opacity-50"
+                            className="glass-button bg-white text-gray-400 hover:bg-white/90 disabled:opacity-50"
                         >
-                            {loading ? 'Posting...' : 'Post Anonymously'}
+                            {loading ? 'Posting...' : 'Send Anonymously'}
                         </button>
                     </div>
                 </form>

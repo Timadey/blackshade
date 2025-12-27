@@ -281,7 +281,7 @@ const ThreadView = () => {
                             onClick={() => setIsModalOpen(true)}
                             className="glass-button bg-white/10 text-white hover:bg-white/20 whitespace-nowrap px-6"
                         >
-                            Add New Post
+                            Send Message
                         </button>
                     </div>
                 </div>
