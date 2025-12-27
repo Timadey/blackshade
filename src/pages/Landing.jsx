@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
 import { Link } from 'react-router-dom';
+import SEO from '../components/SEO';
 
 const Landing = () => {
     const navigate = useNavigate();
@@ -49,6 +50,11 @@ const Landing = () => {
 
     return (
         <Layout>
+            <SEO
+                title="Speak Freely, Stay Anonymous"
+                description="The safest place to share secrets, ask questions, and connect anonymously with friends."
+                keywords="anonymous chat, secret sharing, social network, privacy, blackshade"
+            />
             <div className="flex flex-col items-center justify-center min-h-[80vh] text-center">
                 <div className="space-y-6 max-w-2xl animate-fade-in">
                     <h1 className="text-5xl md:text-7xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-white to-white/50">

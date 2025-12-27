@@ -14,6 +14,7 @@ import EditBoardModal from '../components/EditBoardModal';
 import useInfiniteScroll from '../hooks/useInfiniteScroll';
 
 import { generatePseudonym } from '../lib/PseudoGenerator';
+import SEO from "../components/SEO.jsx";
 
 const BoardView = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -213,6 +214,11 @@ const BoardView = () => {
 
     return (
         <Layout>
+            <SEO 
+                title={board.title}
+                description={`Send anonymous messages to ${board.profiles?.pseudonym || 'a ghost'} on ${board.title}. Join the conversation privately.`}
+                ogType="article"
+            />
             <div className={`max-w-2xl mx-auto space-y-6 ${!user ? 'pb-24' : ''}`}>
                 {/* Privacy Notice */}
                 {isPrivate && !isOwner && (
