@@ -2,7 +2,7 @@ import React, { useRef, useState, useMemo } from 'react';
 import { toPng } from 'html-to-image';
 import { generatePseudonym, getRandomBackground } from '../lib/PseudoGenerator';
 
-const ShareMessageModal = ({ isOpen, onClose, message, boardTitle }) => {
+const ShareMessageModal = ({ isOpen, onClose, message, boardTitle, boardSlug }) => {
     const cardRef = useRef(null);
     const [loading, setLoading] = useState(false);
 
@@ -22,8 +22,8 @@ const ShareMessageModal = ({ isOpen, onClose, message, boardTitle }) => {
                 backgroundColor: 'transparent', // Good for stickers
             });
 
-            const shareUrl = `${window.location.origin}/thread/${message.id}`;
-            const caption = `Anonymous message on Blackshade: ${shareUrl}`;
+            const boardUrl = boardSlug ? `${window.location.origin}/b/${boardSlug}` : window.location.origin;
+            const caption = `Send me an anonymous message on Blackshade: ${boardUrl}`;
 
             if (navigator.share) {
                 const blob = await (await fetch(dataUrl)).blob();

@@ -214,7 +214,7 @@ const BoardView = () => {
 
     return (
         <Layout>
-            <SEO 
+            <SEO
                 title={board.title}
                 description={`Send anonymous messages to ${board.profiles?.pseudonym || 'a ghost'} on ${board.title}. Join the conversation privately.`}
                 ogType="article"
@@ -460,6 +460,7 @@ const BoardView = () => {
                 onClose={() => setShareMessage(null)}
                 message={shareMessage}
                 boardTitle={board.title}
+                boardSlug={board.slug}
             />
 
             {/* Privacy Notice */}
