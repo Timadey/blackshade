@@ -6,7 +6,7 @@ const SEO = ({
     description,
     canonical,
     ogType = 'website',
-    ogImage = 'https://blackshade.site/favicon.svg',
+    ogImage = 'https://blackshade.site/favicon.ico',
     keywords
 }) => {
     const siteName = 'Blackshade';
