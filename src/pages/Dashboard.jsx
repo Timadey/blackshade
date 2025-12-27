@@ -6,6 +6,7 @@ import Layout from '../components/Layout';
 
 import useInfiniteScroll from '../hooks/useInfiniteScroll';
 import ConfirmationModal from '../components/ConfirmationModal';
+import SEO from '../components/SEO';
 
 const Dashboard = () => {
     const { user, profile } = useAuth();
@@ -114,6 +115,7 @@ const Dashboard = () => {
 
     return (
         <Layout>
+            <SEO title="My Corner" description="Manage your anonymous boards and secrets on Blackshade." />
             <div className="max-w-6xl mx-auto px-4 sm:px-6">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
                     <div className="animate-fade-in">
