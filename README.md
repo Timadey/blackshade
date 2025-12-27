@@ -1,16 +1,63 @@
-# React + Vite
+# 🕶 Blackshade — Speak Freely. Stay Anonymous.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Blackshade** is a premium, privacy-first anonymous social network designed for sharing secrets, asking questions, and connecting without revealing your identity. Built with a stunning glassmorphic aesthetic and real-time capabilities.
 
-Currently, two official plugins are available:
+![Blackshade Preview](https://blackshade.site/favicon.svg)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+> [!TIP]
+> **Experience it now: [Visit Blackshade Live](https://blackshade.site/)** 🚀
 
-## React Compiler
+## 🎭 Key Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Anonymous Boards**: Create unique spaces for specific communities, topics, or games (Confessions, Q&A, Hot Takes).
+- **Ghost Identity**: No accounts required for visitors. Every interaction generates a unique pseudonym, ensuring your secrets stay yours.
+- **Premium UI/UX**: A state-of-the-art glassmorphic design system with vibrant gradients, dynamic backgrounds, and smooth micro-animations.
+- **Real-time Interaction**: Watch secrets appear live with real-time message streaming, emoji reactions, and live presence tracking.
+- **Privacy Controls**: 
+  - **Public Boards**: Everyone can see and post.
+  - **Private Boards**: Only the board owner can see incoming messages, while senders remain completely anonymous.
+- **Share as Image**: Export any anonymous message into a high-quality image card ready for social media sharing.
+- **SEO & PWA Ready**: Optimized with `react-helmet-async` for dynamic metadata and fully "installable" as a Progressive Web App (PWA).
 
-## Expanding the ESLint configuration
+## 🛠 Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **Frontend**: [React 19](https://react.dev/), [Vite](https://vitejs.dev/), [Tailwind CSS](https://tailwindcss.com/)
+- **Backend/Database**: [Supabase](https://supabase.com/) (Auth, PostgreSQL DB, Realtime)
+- **State/SEO**: [React Helmet Async](https://github.com/staylor/react-helmet-async)
+- **Utilities**: [Lucide React](https://lucide.dev/), `html-to-image`, `dicebear` avatars
+
+## 🚀 Getting Started
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/your-username/blackshade.git
+cd blackshade
+```
+
+### 2. Install dependencies
+```bash
+npm install
+```
+
+### 3. Setup Environment Variables
+Create a `.env` file in the root directory and add your Supabase credentials:
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### 4. Run Locally
+```bash
+npm run dev
+```
+
+## 🔒 Security & Privacy
+
+Blackshade uses Supabase Row Level Security (RLS) to ensure that only board owners can access private data. Anonymous authentication is used to track "Interacted Boards" without requiring personal information like emails or phone numbers.
+
+## ✨ Ready to haunt?
+
+Join the shadows and start your anonymous journey today.
+
+[**Start Your Board on Blackshade**](https://blackshade.site/) 🕶
+
